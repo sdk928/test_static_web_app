@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Management Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #0078d4;
+            --secondary-color: #2b88d8;
+            --success-color: #107c10;
+            --warning-color: #ff8c00;
+            --danger-color: #d13438;
+            --light-color: #f3f2f1;
+            --dark-color: #323130;
+            --border-radius: 4px;
+            --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 0.75rem 1rem;
+            background-color: var(--light-color);
+            font-weight: 600;
+            border-bottom: 1px solid #e1dfdd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e1dfdd;
+        }
+
+        th {
+            background-color: var(--light-color);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: rgba(0, 120, 212, 0.05);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-pending {
+            background-color: #fff4ce;
+            color: #8a6c00;
+        }
+
+        .status-approved {
+            background-color: #dff6dd;
+            color: var(--success-color);
+        }
+
+        .status-rejected {
+            background-color: #fed9cc;
+            color: var(--danger-color);
+        }
+
+        .status-implemented {
+            background-color: #deecf9;
+            color: var(--primary-color);
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #605e5c;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #0b6a0b;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e1dfdd;
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1rem;
+        }
+
+        .modal-footer {
+            padding: 1rem;
+            background-color: var(--light-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .close {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .float-right {
+            float: right;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .badge-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .badge-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .timeline {
+            position: relative;
+            margin: 2rem 0;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--light-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+
+        .timeline-date {
+            font-size: 0.75rem;
+            color: #605e5c;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-content {
+            background-color: var(--light-color);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>Change Management Dashboard</h1>
+            <div class="header-right">
+                <button id="openNewRequestBtn" class="btn btn-success">New Change Request</button>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Summary Metrics -->
+            <div class="card">
+                <div class="card-header">Pending Approvals</div>
+                <div class="card-body metric-card">
+                    <div class="metric-value" id="pendingCount">5</div>
+                    <div class="metric-label">Changes awaiting approval</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Approved</div>
+                <div class="card-body metric-card">
+                    <div class="metric-value" id="approvedCount">12</div>
+                    <div class="metric-label">Changes approved this month</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Implementation</div>
+                <div class="card-body metric-card">
+                    <div class="metric-value" id="implementedCount">8</div>
+                    <div class="metric-label">Changes implemented</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Success Rate</div>
+                <div class="card-body metric-card">
+                    <div class="metric-value" id="successRate">92%</div>
+                    <div class="metric-label">Implementation success rate</div>
+                </div>
+            </div>
+
+            <!-- Change Request List -->
+            <div class="card full-width">
+                <div class="card-header">
+                    Recent Change Requests
+                </div>
+                <div class="card-body">
+                    <table id="changeRequestsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Requester</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Sample data, will be populated with JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="card full-width">
+                <div class="card-header">Change Requests by Status</div>
+                <div class="card-body">
+                    <div class="chart-container" id="statusChart">
+                        <!-- Chart will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Changes by Category</div>
+                <div class="card-body">
+                    <div class="chart-container" id="categoryChart">
+                        <!-- Chart will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Implementation Timeline</div>
+                <div class="card-body">
+                    <div class="chart-container" id="timelineChart">
+                        <!-- Chart will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="card full-width">
+                <div class="card-header">Recent Activity</div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-date">Feb 26, 2025 - 14:35</div>
+                            <div class="timeline-content">
+                                <strong>Jane Smith</strong> approved change request <strong>CR-2025-021</strong> - Database Schema Update
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">Feb 26, 2025 - 11:20</div>
+                            <div class="timeline-content">
+                                <strong>Mike Johnson</strong> submitted a new change request <strong>CR-2025-022</strong> - Security Certificate Renewal
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">Feb 25, 2025 - 16:45</div>
+                            <div class="timeline-content">
+                                <strong>Sarah Williams</strong> implemented change request <strong>CR-2025-018</strong> - UI Component Update
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">Feb 25, 2025 - 09:30</div>
+                            <div class="timeline-content">
+                                <strong>Robert Chen</strong> requested additional information for <strong>CR-2025-020</strong> - API Integration
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Change Request Modal -->
+    <div id="newRequestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Change Request</h2>
+                <span class="close" id="closeNewRequestModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="changeRequestForm">
+                    <div class="form-group">
+                        <label for="requestTitle">Title</label>
+                        <input type="text" id="requestTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestCategory">Category</label>
+                        <select id="requestCategory" required>
+                            <option value="">Select a category</option>
+                            <option value="Infrastructure">Infrastructure</option>
+                            <option value="Application">Application</option>
+                            <option value="Database">Database</option>
+                            <option value="Network">Network</option>
+                            <option value="Security">Security</option>
+                            <option value="UI/UX">UI/UX</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestPriority">Priority</label>
+                        <select id="requestPriority" required>
+                            <option value="">Select priority</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestDescription">Description</label>
+                        <textarea id="requestDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestJustification">Business Justification</label>
+                        <textarea id="requestJustification" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestImpact">Impact Assessment</label>
+                        <textarea id="requestImpact" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestImplementationDate">Proposed Implementation Date</label>
+                        <input type="date" id="requestImplementationDate" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="cancelRequestBtn">Cancel</button>
+                <button class="btn btn-success" id="submitRequestBtn">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Request Details Modal -->
+    <div id="requestDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailsTitle">Change Request Details</h2>
+                <span class="close" id="closeDetailsModal">&times;</span>
+            </div>
+            <div class="modal-body" id="requestDetailsContent">
+                <!-- Will be populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="closeDetailsBtn">Close</button>
+                <button class="btn btn-success" id="approveRequestBtn">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    
+    <script>
+        // Sample data for the dashboard
+        const changeRequests = [
+            {
+                id: 'CR-2025-022',
+                title: 'Security Certificate Renewal',
+                requester: 'Mike Johnson',
+                category: 'Security',
+                priority: 'High',
+                status: 'Pending',
+                submitted: '2025-02-26',
+                description: 'Renew the SSL certificate for the main domain which expires in 30 days',
+                justification: 'Prevent security warnings and maintain secure connections for our users',
+                impact: 'Minimal impact expected. Brief downtime during certificate implementation.',
+                implementationDate: '2025-03-10'
+            },
+            {
+                id: 'CR-2025-021',
+                title: 'Database Schema Update',
+                requester: 'Sarah Williams',
+                category: 'Database',
+                priority: 'Medium',
+                status: 'Approved',
+                submitted: '2025-02-24',
+                description: 'Add new fields to customer table to support upcoming feature release',
+                justification: 'Required for Q2 product roadmap features',
+                impact: 'Low impact on existing functionality. Requires application update.',
+                implementationDate: '2025-03-05'
+            },
+            {
+                id: 'CR-2025-020',
+                title: 'API Integration',
+                requester: 'Robert Chen',
+                category: 'Application',
+                priority: 'Medium',
+                status: 'Pending',
+                submitted: '2025-02-23',
+                description: 'Integrate with third-party payment gateway API',
+                justification: 'Enable additional payment methods for customers',
+                impact: 'Medium impact. Requires thorough testing of payment flows.',
+                implementationDate: '2025-03-15'
+            },
+            {
+                id: 'CR-2025-019',
+                title: 'Network Firewall Update',
+                requester: 'Thomas Lee',
+                category: 'Network',
+                priority: 'Critical',
+                status: 'Implemented',
+                submitted: '2025-02-20',
+                description: 'Update firewall rules to address recent security advisory',
+                justification: 'Critical security patch to prevent potential vulnerabilities',
+                impact: 'Brief connectivity interruption during implementation.',
+                implementationDate: '2025-02-22'
+            },
+            {
+                id: 'CR-2025-018',
+                title: 'UI Component Update',
+                requester: 'Emily Davis',
+                category: 'UI/UX',
+                priority: 'Low',
+                status: 'Implemented',
+                submitted: '2025-02-18',
+                description: 'Update navigation menu to improve mobile responsiveness',
+                justification: 'Improve user experience on mobile devices',
+                impact: 'Visual changes only, no functional impact expected.',
+                implementationDate: '2025-02-25'
+            },
+            {
+                id: 'CR-2025-017',
+                title: 'Server Capacity Increase',
+                requester: 'David Wilson',
+                category: 'Infrastructure',
+                priority: 'High',
+                status: 'Approved',
+                submitted: '2025-02-15',
+                description: 'Increase web server capacity by 50% to handle growing traffic',
+                justification: 'Recent traffic spikes causing performance degradation during peak hours',
+                impact: 'No user impact expected. Gradual rollout planned.',
+                implementationDate: '2025-03-01'
+            },
+            {
+                id: 'CR-2025-016',
+                title: 'Password Policy Update',
+                requester: 'Jane Smith',
+                category: 'Security',
+                priority: 'Medium',
+                status: 'Rejected',
+                submitted: '2025-02-12',
+                description: 'Update password requirements to increase minimum length and complexity',
+                justification: 'Enhance security posture and comply with industry best practices',
+                impact: 'Users will need to update passwords upon next login.',
+                implementationDate: '2025-02-28'
+            }
+        ];
+
+        // DOM ready function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the dashboard
+            initializeDashboard();
+            
+            // Populate table
+            populateChangeRequestsTable();
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Update metrics
+            updateMetrics();
+            
+            // Event listeners for modals
+            document.getElementById('openNewRequestBtn').addEventListener('click', openNewRequestModal);
+            document.getElementById('closeNewRequestModal').addEventListener('click', closeNewRequestModal);
+            document.getElementById('cancelRequestBtn').addEventListener('click', closeNewRequestModal);
+            document.getElementById('submitRequestBtn').addEventListener('click', submitChangeRequest);
+            
+            document.getElementById('closeDetailsModal').addEventListener('click', closeDetailsModal);
+            document.getElementById('closeDetailsBtn').addEventListener('click', closeDetailsModal);
+            document.getElementById('approveRequestBtn').addEventListener('click', approveChangeRequest);
+            
+            // Close modals when clicking outside content
+            window.addEventListener('click', function(event) {
+                if (event.target === document.getElementById('newRequestModal')) {
+                    closeNewRequestModal();
+                }
+                if (event.target === document.getElementById('requestDetailsModal')) {
+                    closeDetailsModal();
+                }
+            });
+        });
+
+        function initializeDashboard() {
+            console.log('Change Management Dashboard initialized');
+        }
+
+        function populateChangeRequestsTable() {
+            const tableBody = document.querySelector('#changeRequestsTable tbody');
+            tableBody.innerHTML = '';
+            
+            changeRequests.forEach(request => {
+                const row = document.createElement('tr');
+                
+                // Format date
+                const submittedDate = new Date(request.submitted);
+                const formattedDate = submittedDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                // Get status class
+                const statusClass = getStatusClass(request.status);
+                
+                row.innerHTML = `
+                    <td>${request.id}</td>
+                    <td>${request.title}</td>
+                    <td>${request.requester}</td>
+                    <td>${request.category}</td>
+                    <td>${getPriorityBadge(request.priority)}</td>
+                    <td><span class="status ${statusClass}">${request.status}</span></td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <button class="btn view-details" data-id="${request.id}">View</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-details').forEach(button => {
+                button.addEventListener('click', function() {
+                    const requestId = this.getAttribute('data-id');
+                    openDetailsModal(requestId);
+                });
+            });
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Pending': return 'status-pending';
+                case 'Approved': return 'status-approved';
+                case 'Rejected': return 'status-rejected';
+                case 'Implemented': return 'status-implemented';
+                default: return '';
+            }
+        }
+
+        function getPriorityBadge(priority) {
+            let badgeClass = 'badge ';
+            switch(priority) {
+                case 'Low': 
+                    badgeClass += 'badge-primary';
+                    break;
+                case 'Medium': 
+                    badgeClass += 'badge-primary';
+                    break;
+                case 'High': 
+                    badgeClass += 'badge-warning';
+                    break;
+                case 'Critical': 
+                    badgeClass += 'badge-danger';
+                    break;
+                default: 
+                    badgeClass += 'badge-primary';
+            }
+            
+            return `${priority} <span class="${badgeClass}"></span>`;
+        }
+
+        function updateMetrics() {
+            const pendingCount = changeRequests.filter(req => req.status === 'Pending').length;
+            const approvedCount = changeRequests.filter(req => req.status === 'Approved').length;
+            const implementedCount = changeRequests.filter(req => req.status === 'Implemented').length;
+            
+            document.getElementById('pendingCount').textContent = pendingCount;
+            document.getElementById('approvedCount').textContent = approvedCount;
+            document.getElementById('implementedCount').textContent = implementedCount;
+            
+            // Calculate success rate (implemented vs. rejected)
+            const totalCompleted = implementedCount + changeRequests.filter(req => req.status === 'Rejected').length;
+            const successRate = totalCompleted > 0 ? Math.round((implementedCount / totalCompleted) * 100) : 100;
+            document.getElementById('successRate').textContent = `${successRate}%`;
+        }
+
+        function initializeCharts() {
+            // Status Chart
+            const statusData = {
+                Pending: changeRequests.filter(req => req.status === 'Pending').length,
+                Approved: changeRequests.filter(req => req.status === 'Approved').length,
+                Rejected: changeRequests.filter(req => req.status === 'Rejected').length,
+                Implemented: changeRequests.filter(req => req.status === 'Implemented').length
+            };
+            
+            const statusCtx = document.createElement('canvas');
+            document.getElementById('statusChart').appendChild(statusCtx);
+            
+            new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(statusData),
+                    datasets: [{
+                        label: 'Number of Requests',
+                        data: Object.values(statusData),
+                        backgroundColor: [
+                            '#fff4ce', // Pending (yellow)
+                            '#dff6dd', // Approved (green)
+                            '#fed9cc', // Rejected (red)
+                            '#deecf9'  // Implemented (blue)
+                        ],
+                        borderColor: [
+                            '#8a6c00',
+                            '#107c10',
+                            '#d13438',
+                            '#0078d4'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Category Chart
+            const categories = {};
+            changeRequests.forEach(req => {
+                if (categories[req.category]) {
+                    categories[req.category]++;
+                } else {
+                    categories[req.category] = 1;
+                }
+            });
+            
+            const categoryCtx = document.createElement('canvas');
+            document.getElementById('categoryChart').appendChild(categoryCtx);
+            
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: [
+                            '#0078d4', // Primary
+                            '#2b88d8',
+                            '#5ea7e6',
+                            '#83bfea',
+                            '#a7d2ee',
+                            '#cae5f3',
+                            '#e9f4fb'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+            
+            // Timeline Chart (implementation dates)
+            const implementationDates = {};
+            const approvedAndPendingRequests = changeRequests.filter(
+                req => req.status === 'Approved' || req.status === 'Pending'
+            );
+            
+            approvedAndPendingRequests.forEach(req => {
+                const date = new Date(req.implementationDate);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                if (implementationDates[formattedDate]) {
+                    implementationDates[formattedDate]++;
+                } else {
+                    implementationDates[formattedDate] = 1;
+                }
+            });
+            
+            // Sort dates
+            const sortedDates = Object.keys(implementationDates).sort((a, b) => {
+                return new Date(a) - new Date(b);
+            });
+            
+            const timelineCtx = document.createElement('canvas');
+            document.getElementById('timelineChart').appendChild(timelineCtx);
+            
+            new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Planned Implementations',
+                        data: sortedDates.map(date => implementationDates[date]),
+                        borderColor: '#0078d4',
+                        backgroundColor: 'rgba(0, 120, 212, 0.2)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function openNewRequestModal() {
+            // Reset form
+            document.getElementById('changeRequestForm').reset();
+            
+            // Set default implementation date to current date + 2 weeks
+            const defaultDate = new Date();
+            defaultDate.setDate(defaultDate.getDate() + 14);
+            document.getElementById('requestImplementationDate').valueAsDate = defaultDate;
+            
+            // Show modal
+            document.getElementById('newRequestModal').style.display = 'flex';
+        }
+
+        function closeNewRequestModal() {
+            document.getElementById('newRequestModal').style.display = 'none';
+        }
+
+        function submitChangeRequest(event) {
+            event.preventDefault();
+            
+            // Validate form
+            const form = document.getElementById('changeRequestForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            // Get form values
+            const title = document.getElementById('requestTitle').value;
+            const category = document.getElementById('requestCategory').value;
+            const priority = document.getElementById('requestPriority').value;
+            const description = document.getElementById('requestDescription').value;
+            const justification = document.getElementById('requestJustification').value;
+            const impact = document.getElementById('requestImpact').value;
+            const implementationDate = document.getElementById('requestImplementationDate').value;
+            
+            // Create new request object
+            const today = new Date();
+            const newRequest = {
+                id: `CR-${today.getFullYear()}-${String(changeRequests.length + 16).padStart(3, '0')}`,
+                title: title,
+                requester: 'Current User', // In a real app, this would be the logged-in user
+                category: category,
+                priority: priority,
+                status: 'Pending',
+                submitted: today.toISOString().split('T')[0],
+                description: description,
+                justification: justification,
+                impact: impact,
+                implementationDate: implementationDate
+            };
+            
+            // Add to array (in a real app, this would be sent to a server)
+            changeRequests.unshift(newRequest);
+            
+            // Update UI
+            populateChangeRequestsTable();
+            updateMetrics();
+            initializeCharts();
+            
+            // Update timeline
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item';
+            timelineItem.innerHTML = `
+                <div class="timeline-date">${today.toLocaleString()}</div>
+                <div class="timeline-content">
+                    <strong>Current User</strong> submitted a new change request <strong>${newRequest.id}</strong> - ${newRequest.title}
+                </div>
+            `;
+            document.querySelector('.timeline').prepend(timelineItem);
+            
+            // Close modal
+            closeNewRequestModal();
+            
+            // Show notification (in a real app)
+            alert(`Change request ${newRequest.id} submitted successfully!`);
+        }
+
+        function openDetailsModal(requestId) {
+            // Find the request
+            const request = changeRequests.find(req => req.id === requestId);
+            if (!request) return;
+            
+            // Update modal title
+            document.getElementById('detailsTitle').textContent = `${request.id}: ${request.title}`;
+            
+            // Format dates
+            const submittedDate = new Date(request.submitted);
+            const implementationDate = new Date(request.implementationDate);
+            
+            const formattedSubmitted = submittedDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            const formattedImplementation = implementationDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Create content
+            const content = document.getElementById('requestDetailsContent');
+            content.innerHTML = `
+                <div class="form-group">
+                    <label>Status</label>
+                    <div><span class="status ${getStatusClass(request.status)}">${request.status}</span></div>
+                </div>
+                <div class="form-group">
+                    <label>Requester</label>
+                    <div>${request.requester}</div>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <div>${request.category}</div>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <div>${request.priority}</div>
+                </div>
+                <div class="form-group">
+                    <label>Submitted</label>
+                    <div>${formattedSubmitted}</div>
+                </div>
+                <div class="form-group">
+                    <label>Proposed Implementation Date</label>
+                    <div>${formattedImplementation}</div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <div>${request.description}</div>
+                </div>
+                <div class="form-group">
+                    <label>Business Justification</label>
+                    <div>${request.justification}</div>
+                </div>
+                <div class="form-group">
+                    <label>Impact Assessment</label>
+                    <div>${request.impact}</div>
+                </div>
+            `;
+            
+            // Show/hide approve button based on status
+            const approveBtn = document.getElementById('approveRequestBtn');
+            if (request.status === 'Pending') {
+                approveBtn.style.display = 'block';
+                approveBtn.setAttribute('data-id', request.id);
+            } else {
+                approveBtn.style.display = 'none';
+            }
+            
+            // Show modal
+            document.getElementById('requestDetailsModal').style.display = 'flex';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('requestDetailsModal').style.display = 'none';
+        }
+
+        function approveChangeRequest() {
+            const requestId = document.getElementById('approveRequestBtn').getAttribute('data-id');
+            const request = changeRequests.find(req => req.id === requestId);
+            
+            if (request) {
+                // Update status
+                request.status = 'Approved';
+                
+                // Update UI
+                populateChangeRequestsTable();
+                updateMetrics();
+                initializeCharts();
+                
+                // Update timeline
+                const today = new Date();
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                timelineItem.innerHTML = `
+                    <div class="timeline-date">${today.toLocaleString()}</div>
+                    <div class="timeline-content">
+                        <strong>Current User</strong> approved change request <strong>${request.id}</strong> - ${request.title}
+                    </div>
+                `;
+                document.querySelector('.timeline').prepend(timelineItem);
+                
+                // Close modal
+                closeDetailsModal();
+                
+                // Show notification (in a real app)
+                alert(`Change request ${request.id} has been approved!`);
+            }
+        }
+    </script>
+</body>
+</html>
