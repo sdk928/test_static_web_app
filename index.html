@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Azure Static Web App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        header {
+            background-color: #0078d4;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .feature {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #666;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to My Azure Static Web App</h1>
+    </header>
+    
+    <div class="container">
+        <div class="feature">
+            <h2>About This App</h2>
+            <p>This is a simple static web application hosted on Azure Static Web Apps. It demonstrates how easy it is to deploy static content to Azure.</p>
+        </div>
+        
+        <div class="feature">
+            <h2>Azure Static Web Apps Features</h2>
+            <ul>
+                <li>Global distribution with Azure CDN</li>
+                <li>Custom domain support</li>
+                <li>Free SSL certificates</li>
+                <li>CI/CD integration with GitHub/Azure DevOps</li>
+                <li>API support via Azure Functions</li>
+            </ul>
+        </div>
+        
+        <div class="feature">
+            <h2>Current Time</h2>
+            <p id="current-time">Loading...</p>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Created for Azure Static Web Apps - © <span id="current-year"></span></p>
+    </footer>
+    
+    <script>
+        // Display current time
+        function updateTime() {
+            const timeElement = document.getElementById('current-time');
+            timeElement.textContent = new Date().toLocaleString();
+        }
+        
+        // Set copyright year
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Update time every second
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
