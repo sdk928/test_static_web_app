@@ -532,8 +532,9 @@
         </div>
     </div>
 
-    <!-- Include Chart.js -->
+    <!-- Include Chart.js and Microsoft Azure Cosmos DB JavaScript SDK -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@azure/cosmos@3.17.2/dist/index.min.js"></script>
     
     <script>
         // Sample data for the dashboard
@@ -632,9 +633,27 @@
         ];
 
         // DOM ready function
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // Initialize the dashboard
             initializeDashboard();
+
+            // Try to load data from Cosmos DB
+            try {
+                const dbInitialized = await initializeCosmosClient();
+                if (dbInitialized) {
+                    const dbChangeRequests = await loadFromCosmosDB();
+                    if (dbChangeRequests && dbChangeRequests.length > 0) {
+                        // Use data from Cosmos DB
+                        changeRequests = dbChangeRequests;
+                        console.log(`Loaded ${changeRequests.length} change requests from Cosmos DB`);
+                    } else {
+                        console.log("No change requests found in Cosmos DB, using sample data");
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading data from Cosmos DB:", error);
+                console.log("Using sample data instead");
+            }
             
             // Populate table
             populateChangeRequestsTable();
@@ -923,7 +942,105 @@
             document.getElementById('newRequestModal').style.display = 'none';
         }
 
-        function submitChangeRequest(event) {
+        // Cosmos DB configuration
+        const cosmosConfig = {
+            endpoint: "https://cmsdk928.documents.azure.com:443/",
+            key: "ns0nIrMoCHmTaebLUIaYHLma1VNzMStGZCB8N3Il1XTdasPCrMfmovBi3LmBvlfUbx7dTg44eowUACDbqQY5IQ==", // The key should be securely stored and retrieved
+            databaseId: "cmdb",
+            containerId: "chgmgt"
+        };
+
+        // Initialize Cosmos DB client
+        let cosmosClient = null;
+        let container = null;
+
+        async function initializeCosmosClient() {
+            try {
+                // In a production app, you would use a backend service with secure key storage
+                // Here we're initializing the client, but in a real app this would be done securely
+                
+                // For development purposes only - in production this would be handled by a secure backend
+                cosmosClient = new Cosmos.CosmosClient({ 
+                    endpoint: cosmosConfig.endpoint,
+                    key: cosmosConfig.key 
+                });
+                
+                // Check if database exists, if not create it
+                const { database } = await cosmosClient.databases.createIfNotExists({ id: cosmosConfig.databaseId });
+                
+                // Check if container exists, if not create it
+                const { container: newContainer } = await database.containers.createIfNotExists({ 
+                    id: cosmosConfig.containerId,
+                    partitionKey: { paths: ["/id"] }
+                });
+                
+                container = newContainer;
+                console.log("Cosmos DB client initialized successfully");
+                return true;
+            } catch (error) {
+                console.error("Failed to initialize Cosmos DB client:", error);
+                return false;
+            }
+        }
+
+        // Call initialization
+        initializeCosmosClient().catch(error => {
+            console.error("Error during Cosmos DB initialization:", error);
+        });
+
+        async function saveToCosmosDB(item) {
+            try {
+                if (!container) {
+                    console.error("Cosmos DB container not initialized");
+                    return false;
+                }
+                
+                const { resource: createdItem } = await container.items.create(item);
+                console.log(`Change request created in Cosmos DB with id: ${createdItem.id}`);
+                return true;
+            } catch (error) {
+                console.error("Error saving to Cosmos DB:", error);
+                return false;
+            }
+        }
+
+        async function loadFromCosmosDB() {
+            try {
+                if (!container) {
+                    console.error("Cosmos DB container not initialized");
+                    return [];
+                }
+                
+                const querySpec = {
+                    query: "SELECT * FROM c ORDER BY c.submitted DESC"
+                };
+                
+                const { resources: items } = await container.items.query(querySpec).fetchAll();
+                console.log(`Retrieved ${items.length} change requests from Cosmos DB`);
+                return items;
+            } catch (error) {
+                console.error("Error loading from Cosmos DB:", error);
+                return [];
+            }
+        }
+
+        async function updateInCosmosDB(item) {
+            try {
+                if (!container) {
+                    console.error("Cosmos DB container not initialized");
+                    return false;
+                }
+                
+                const { resource: updatedItem } = await container.item(item.id).replace(item);
+                console.log(`Change request updated in Cosmos DB with id: ${updatedItem.id}`);
+                return true;
+            } catch (error) {
+                console.error("Error updating in Cosmos DB:", error);
+                return false;
+            }
+        }
+
+        async function submitChangeRequest(event) {
             event.preventDefault();
             
             // Validate form
@@ -955,33 +1072,55 @@
                 description: description,
                 justification: justification,
                 impact: impact,
-                implementationDate: implementationDate
+                implementationDate: implementationDate,
+                timestamp: new Date().toISOString(),
+                type: "ChangeRequest"
             };
             
-            // Add to array (in a real app, this would be sent to a server)
-            changeRequests.unshift(newRequest);
+            // Show loading indicator
+            document.getElementById('submitRequestBtn').textContent = "Submitting...";
+            document.getElementById('submitRequestBtn').disabled = true;
             
-            // Update UI
-            populateChangeRequestsTable();
-            updateMetrics();
-            initializeCharts();
-            
-            // Update timeline
-            const timelineItem = document.createElement('div');
-            timelineItem.className = 'timeline-item';
-            timelineItem.innerHTML = `
-                <div class="timeline-date">${today.toLocaleString()}</div>
-                <div class="timeline-content">
-                    <strong>Current User</strong> submitted a new change request <strong>${newRequest.id}</strong> - ${newRequest.title}
-                </div>
-            `;
-            document.querySelector('.timeline').prepend(timelineItem);
-            
-            // Close modal
-            closeNewRequestModal();
-            
-            // Show notification (in a real app)
-            alert(`Change request ${newRequest.id} submitted successfully!`);
+            try {
+                // Save to Cosmos DB
+                const success = await saveToCosmosDB(newRequest);
+                
+                if (success) {
+                    // Add to local array for UI update
+                    changeRequests.unshift(newRequest);
+                    
+                    // Update UI
+                    populateChangeRequestsTable();
+                    updateMetrics();
+                    initializeCharts();
+                    
+                    // Update timeline
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = 'timeline-item';
+                    timelineItem.innerHTML = `
+                        <div class="timeline-date">${today.toLocaleString()}</div>
+                        <div class="timeline-content">
+                            <strong>Current User</strong> submitted a new change request <strong>${newRequest.id}</strong> - ${newRequest.title}
+                        </div>
+                    `;
+                    document.querySelector('.timeline').prepend(timelineItem);
+                    
+                    // Close modal
+                    closeNewRequestModal();
+                    
+                    // Show success notification
+                    alert(`Change request ${newRequest.id} submitted successfully and saved to database!`);
+                } else {
+                    alert("Failed to save to database. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error during submission:", error);
+                alert("An error occurred during submission. Please try again.");
+            } finally {
+                // Reset button
+                document.getElementById('submitRequestBtn').textContent = "Submit Request";
+                document.getElementById('submitRequestBtn').disabled = false;
+            }
         }
 
         function openDetailsModal(requestId) {
@@ -1066,36 +1205,66 @@
             document.getElementById('requestDetailsModal').style.display = 'none';
         }
 
-        function approveChangeRequest() {
+        async function approveChangeRequest() {
             const requestId = document.getElementById('approveRequestBtn').getAttribute('data-id');
             const request = changeRequests.find(req => req.id === requestId);
             
             if (request) {
-                // Update status
-                request.status = 'Approved';
+                // Show loading state
+                document.getElementById('approveRequestBtn').textContent = "Approving...";
+                document.getElementById('approveRequestBtn').disabled = true;
                 
-                // Update UI
-                populateChangeRequestsTable();
-                updateMetrics();
-                initializeCharts();
-                
-                // Update timeline
-                const today = new Date();
-                const timelineItem = document.createElement('div');
-                timelineItem.className = 'timeline-item';
-                timelineItem.innerHTML = `
-                    <div class="timeline-date">${today.toLocaleString()}</div>
-                    <div class="timeline-content">
-                        <strong>Current User</strong> approved change request <strong>${request.id}</strong> - ${request.title}
-                    </div>
-                `;
-                document.querySelector('.timeline').prepend(timelineItem);
-                
-                // Close modal
-                closeDetailsModal();
-                
-                // Show notification (in a real app)
-                alert(`Change request ${request.id} has been approved!`);
+                try {
+                    // Update status
+                    request.status = 'Approved';
+                    request.approvedDate = new Date().toISOString();
+                    request.approvedBy = 'Current User'; // In a real app, this would be the logged-in user
+                    
+                    // Update in Cosmos DB
+                    const success = await updateInCosmosDB(request);
+                    
+                    if (success) {
+                        // Update UI
+                        populateChangeRequestsTable();
+                        updateMetrics();
+                        initializeCharts();
+                        
+                        // Update timeline
+                        const today = new Date();
+                        const timelineItem = document.createElement('div');
+                        timelineItem.className = 'timeline-item';
+                        timelineItem.innerHTML = `
+                            <div class="timeline-date">${today.toLocaleString()}</div>
+                            <div class="timeline-content">
+                                <strong>Current User</strong> approved change request <strong>${request.id}</strong> - ${request.title}
+                            </div>
+                        `;
+                        document.querySelector('.timeline').prepend(timelineItem);
+                        
+                        // Close modal
+                        closeDetailsModal();
+                        
+                        // Show success notification
+                        alert(`Change request ${request.id} has been approved and updated in the database!`);
+                    } else {
+                        alert("Failed to update database. Please try again.");
+                        // Revert status change
+                        request.status = 'Pending';
+                        delete request.approvedDate;
+                        delete request.approvedBy;
+                    }
+                } catch (error) {
+                    console.error("Error during approval:", error);
+                    alert("An error occurred during approval. Please try again.");
+                    // Revert status change
+                    request.status = 'Pending';
+                    delete request.approvedDate;
+                    delete request.approvedBy;
+                } finally {
+                    // Reset button
+                    document.getElementById('approveRequestBtn').textContent = "Approve";
+                    document.getElementById('approveRequestBtn').disabled = false;
+                }
             }
         }
     </script>
