@@ -1083,7 +1083,8 @@
             
             try {
                 // Save to Cosmos DB
-                const success = await saveToCosmosDB(newRequest);
+                //const success = await saveToCosmosDB(newRequest);
+                const success = await loadFromCosmosDB();
                 
                 if (success) {
                     // Add to local array for UI update
