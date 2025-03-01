@@ -945,7 +945,7 @@
         // Cosmos DB configuration
         const cosmosConfig = {
             endpoint: "https://cmsdk928.documents.azure.com:443/",
-            key: "ns0nIrMoCHmTaebLUIaYHLma1VNzMStGZCB8N3Il1XTdasPCrMfmovBi3LmBvlfUbx7dTg44eowUACDbqQY5IQ==",
+            key: "",
             databaseId: "cmbd",
             containerId: "chgmgt"
         };
@@ -1083,8 +1083,8 @@
             
             try {
                 // Save to Cosmos DB
-                //const success = await saveToCosmosDB(newRequest);
-                const success = await loadFromCosmosDB();
+                const success = await saveToCosmosDB(newRequest);
+                //const success = await loadFromCosmosDB();
                 
                 if (success) {
                     // Add to local array for UI update
